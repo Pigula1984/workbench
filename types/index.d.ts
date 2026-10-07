@@ -27,6 +27,8 @@ export type StatusbarState = {
   weekResetsAt: string | null
   /** When the main thread's prompt cache goes cold, ISO 8601: its last response plus the cache's lifetime. */
   cacheWarmUntil: string | null
+  /** What the session would have cost at API prices, in US dollars, as /cost totals it. */
+  costUsd: number | null
 }
 
 declare module 'claude-code' {

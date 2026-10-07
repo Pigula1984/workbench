@@ -31,6 +31,7 @@ const bar = atom({ plugin: 'workbench', key: 'statusbar' } as const, {
   fiveHourResetsAt: null,
   weekResetsAt: null,
   cacheWarmUntil: null,
+  costUsd: null,
 } satisfies StatusbarState as StatusbarState)
 
 const BRANCH_POLL_MS = 5000
@@ -83,7 +84,7 @@ async function readBranch($: EngineInterface): Promise<string | null> {
 // The status line's own figures: free to ask for, so asked for often.
 async function refreshUsage($: EngineInterface): Promise<void> {
   await safely(async () => {
-    const { context, rateLimits } = await $.session.usage()
+    const { context, rateLimits, cost } = await $.session.usage()
     const fiveHour = rateLimits.find(limit => limit.kind === 'five_hour')
     const week = rateLimits.find(limit => limit.kind === 'seven_day')
 
@@ -93,6 +94,7 @@ async function refreshUsage($: EngineInterface): Promise<void> {
       weekPercent: week?.percentUsed ?? null,
       fiveHourResetsAt: fiveHour?.resetsAt ?? null,
       weekResetsAt: week?.resetsAt ?? null,
+      costUsd: cost?.usd ?? null,
     })
   })
 }

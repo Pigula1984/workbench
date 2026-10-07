@@ -2,7 +2,7 @@ import type { Color } from 'claude-code'
 
 import type { StatusbarState } from '../../types'
 
-export type SegmentId = 'model' | 'effort' | 'mode' | 'dir' | 'branch' | 'context' | 'fiveHour' | 'week' | 'cache'
+export type SegmentId = 'model' | 'effort' | 'mode' | 'dir' | 'branch' | 'context' | 'fiveHour' | 'week' | 'cache' | 'cost'
 
 export type Segment = {
   id: SegmentId
@@ -99,6 +99,9 @@ const MODES = new Map<string, { text: string; color: Color }>([
 export const modeLabel = (mode: string): { text: string; color: Color } =>
   MODES.get(mode) ?? { text: mode, color: 'text' }
 
+/** Dollars with cents, a cent and below as `<$0.01`. */
+export const costLabel = (usd: number): string => (usd < 0.01 ? '<$0.01' : `$${usd.toFixed(2)}`)
+
 const clip = (text: string, max: number): string =>
   text.length <= max ? text : `${text.slice(0, Math.max(1, max - 1))}…`
 
@@ -172,6 +175,10 @@ export const buildSegments = (state: StatusbarState, dirMax: number): Segment[] 
     segments.push({ id: 'branch', text: `git:${clip(state.branch, 28)}`, color: 'merged' })
   }
 
+  if (state.costUsd !== null) {
+    segments.push({ id: 'cost', text: `API ${costLabel(state.costUsd)}`, color: 'inactive' })
+  }
+
   return segments
 }
 
@@ -180,7 +187,7 @@ const widthOf = (segments: readonly Segment[]): number =>
   SEPARATOR.length * Math.max(0, segments.length - 1)
 
 // What goes first when the row is too narrow: the least telling segment.
-const DROP_ORDER: readonly SegmentId[] = ['effort', 'dir', 'branch', 'model', 'mode']
+const DROP_ORDER: readonly SegmentId[] = ['cost', 'effort', 'dir', 'branch', 'model', 'mode']
 
 /** The segments that fit in `columns` cells: the directory shortens first, then segments drop. */
 export const layout = (state: StatusbarState, columns: number): Segment[] => {

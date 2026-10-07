@@ -10,6 +10,7 @@ import {
   modeFromTelemetry,
   modelLabel,
   usageSegments,
+  costLabel,
   CACHE_TTL_MS,
   resetDay,
   timeUntil,
@@ -30,6 +31,7 @@ const FULL: StatusbarState = {
   fiveHourResetsAt: '2026-10-12T14:14:00Z',
   weekResetsAt: '2026-10-12T12:00:00Z',
   cacheWarmUntil: '2026-10-12T12:47:00Z',
+  costUsd: 3.456,
 }
 
 describe('modelLabel', () => {
@@ -140,25 +142,26 @@ describe('layout', () => {
   test('lays out the five segments in the order asked for', () => {
     const segments = layout(FULL, 120)
 
-    expect(segments.map(segment => segment.id)).toEqual(['model', 'effort', 'mode', 'dir', 'branch'])
+    expect(segments.map(segment => segment.id)).toEqual(['model', 'effort', 'mode', 'dir', 'branch', 'cost'])
     expect(segments.map(segment => segment.text)).toEqual([
       'Sonnet 5.5',
       'effort xhigh',
       '⏸ plan mode',
       '~/git/workbench',
       'git:master',
+      'API $3.46',
     ])
   })
 
   test('leaves out what is not known', () => {
-    const segments = layout({ ...FULL, effort: null, branch: null, cwd: null }, 120)
+    const segments = layout({ ...FULL, effort: null, branch: null, cwd: null, costUsd: null }, 120)
 
     expect(segments.map(segment => segment.id)).toEqual(['model', 'mode'])
-    expect(layout({ ...FULL, model: null, effort: null, mode: null, cwd: null, branch: null }, 120)).toEqual([])
+    expect(layout({ ...FULL, model: null, effort: null, mode: null, cwd: null, branch: null, costUsd: null }, 120)).toEqual([])
   })
 
   test('shortens the directory, then drops segments, to fit a narrow row', () => {
-    const deep = { ...FULL, cwd: 'C:\\Users\\Admin\\git\\workbench\\mods\\statusbar\\deep\\deeper' }
+    const deep = { ...FULL, costUsd: null, cwd: 'C:\\Users\\Admin\\git\\workbench\\mods\\statusbar\\deep\\deeper' }
     const wide = layout(deep, 90)
     const narrow = layout(deep, 40)
     const tiny = layout(deep, 24)
@@ -237,5 +240,12 @@ describe('cache segment', () => {
 
   test('the main thread is cached for an hour', () => {
     expect(CACHE_TTL_MS).toBe(3_600_000)
+  })
+})
+
+describe('cost', () => {
+  test('shows dollars with cents', () => {
+    expect(costLabel(3.456)).toBe('$3.46')
+    expect(costLabel(0.004)).toBe('<$0.01')
   })
 })

@@ -22,6 +22,7 @@ context 34% · 5h 13% ↻ 2h 14m · week 81% ↻ pon 14:00
 | mode | `permission_mode_changed` { to_mode }, which the CLI logs for an OpenTelemetry collector on every switch (read only, passed on unchanged); the permission mode on the classic events (`UserPromptSubmit`, `Stop`, `PostToolUse`, ...); the prompt footer's brief `... mode on` flash after Shift+Tab |
 | directory | `$.session.cwd()`, `classic.CwdChanged`; home shown as `~` |
 | branch | `git branch --show-current`, refreshed after each turn, after Bash calls and every 5 s |
+| API cost | `$.session.usage().cost.usd`, what the session would cost at API prices (as `/cost` totals it), refreshed with the usage; dropped first on a narrow terminal |
 | context / 5h / week / cache | `$.session.usage()`: `context.percent` and the `five_hour` / `seven_day` rate limits with their `resetsAt` (5h as a countdown redrawn every 30 s, the week as the local day and hour), after each response, at the end of a turn, after a compaction and every 5 s; green below 50 %, amber to 80 %, red above; a value not reported yet is left out. `cache` counts down from the last main-thread response: 1 h, the TTL the CLI uses for the main thread (amber under 5 min, red when cold) |
 
 On a narrow terminal the directory shortens first, then segments drop
