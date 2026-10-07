@@ -5,6 +5,7 @@ import type { StatusbarState } from '../../types'
 import {
   effortFromSettings,
   isEffortLevel,
+  CACHE_TTL_MS,
   layout,
   modeFromHint,
   modeFromSettings,
@@ -29,6 +30,7 @@ const bar = atom({ plugin: 'workbench', key: 'statusbar' } as const, {
   weekPercent: null,
   fiveHourResetsAt: null,
   weekResetsAt: null,
+  cacheWarmUntil: null,
 } satisfies StatusbarState as StatusbarState)
 
 const BRANCH_POLL_MS = 5000
@@ -182,6 +184,8 @@ export const registerStatusbar = (on: On): void => {
   // The model: /model, a picker, a fallback.
   on('classic.PostModelSwitch', async ($, e, next) => {
     await safely(() => followModel($, e.to_model))
+    // Another model has no cache of this conversation yet.
+    await safely(() => patch($, { cacheWarmUntil: null }))
 
     return next(e)
   })
@@ -194,9 +198,14 @@ export const registerStatusbar = (on: On): void => {
 
     const result = yield* next(e)
 
-    // Each response moves the context and the rate-limit windows.
+    // Each response moves the context and the rate-limit windows, and rewrites the
+    // prompt cache: it stays warm a TTL from now.
     if (e.agentId === undefined) {
       await refreshUsage($)
+
+      if (result.usage !== null) {
+        await safely(() => patch($, { cacheWarmUntil: new Date(Date.now() + CACHE_TTL_MS).toISOString() }))
+      }
     }
 
     return result

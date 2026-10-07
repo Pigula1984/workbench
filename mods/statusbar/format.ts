@@ -2,7 +2,7 @@ import type { Color } from 'claude-code'
 
 import type { StatusbarState } from '../../types'
 
-export type SegmentId = 'model' | 'effort' | 'mode' | 'dir' | 'branch' | 'context' | 'fiveHour' | 'week'
+export type SegmentId = 'model' | 'effort' | 'mode' | 'dir' | 'branch' | 'context' | 'fiveHour' | 'week' | 'cache'
 
 export type Segment = {
   id: SegmentId
@@ -284,8 +284,30 @@ export const usageSegments = (state: StatusbarState, now: number, locale?: strin
     })
   }
 
+  if (state.cacheWarmUntil !== null) {
+    const left = Date.parse(state.cacheWarmUntil) - now
+    const label = timeUntil(state.cacheWarmUntil, now)
+
+    segments.push(
+      label === null
+        ? { id: 'cache', text: 'cache cold', color: 'error' }
+        : { id: 'cache', text: `cache ${label}`, color: left <= CACHE_LOW_MS ? 'warning' : 'success' },
+    )
+  }
+
   return segments
 }
+
+// Under five minutes left the next prompt is worth sending soon: amber.
+const CACHE_LOW_MS = 5 * 60_000
+
+/**
+ * How long the prompt cache keeps the main thread's prefix: the CLI writes the
+ * interactive main thread's cache with the one-hour TTL. (Plugins are not told
+ * the TTL; guessing five minutes from missing rate-limit windows showed a warm
+ * cache as cold.)
+ */
+export const CACHE_TTL_MS = 60 * 60_000
 
 const record = (value: unknown): Readonly<Record<string, unknown>> | undefined =>
   typeof value === 'object' && value !== null && !Array.isArray(value)

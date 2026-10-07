@@ -25,6 +25,8 @@ export type StatusbarState = {
   fiveHourResetsAt: string | null
   /** When the weekly window resets, ISO 8601. */
   weekResetsAt: string | null
+  /** When the main thread's prompt cache goes cold, ISO 8601: its last response plus the cache's lifetime. */
+  cacheWarmUntil: string | null
 }
 
 declare module 'claude-code' {

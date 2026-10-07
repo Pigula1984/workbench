@@ -10,6 +10,7 @@ import {
   modeFromTelemetry,
   modelLabel,
   usageSegments,
+  CACHE_TTL_MS,
   resetDay,
   timeUntil,
   shortPath,
@@ -28,6 +29,7 @@ const FULL: StatusbarState = {
   weekPercent: 81,
   fiveHourResetsAt: '2026-10-12T14:14:00Z',
   weekResetsAt: '2026-10-12T12:00:00Z',
+  cacheWarmUntil: '2026-10-12T12:47:00Z',
 }
 
 describe('modelLabel', () => {
@@ -205,8 +207,8 @@ describe('usageSegments', () => {
   test('shows context, five-hour and weekly use in per cent, colored by how full', () => {
     const segments = usageSegments(FULL, NOW, 'pl-PL')
 
-    expect(segments.map(segment => segment.text)).toEqual(['context 34%', '5h 13%', 'week 81%'])
-    expect(segments.map(segment => segment.color)).toEqual(['success', 'success', 'error'])
+    expect(segments.map(segment => segment.text)).toEqual(['context 34%', '5h 13%', 'week 81%', 'cache 47m'])
+    expect(segments.map(segment => segment.color)).toEqual(['success', 'success', 'error', 'success'])
     expect(segments[0]?.detail).toBeUndefined()
     expect(segments[1]?.detail).toBe('↻ 2h 14m')
     expect(segments[2]?.detail).toMatch(/^↻ pon \d\d:00$/)
@@ -214,10 +216,26 @@ describe('usageSegments', () => {
   })
 
   test('leaves out what the session has not reported', () => {
-    const bare = { ...FULL, fiveHourResetsAt: null, weekResetsAt: null }
+    const bare = { ...FULL, fiveHourResetsAt: null, weekResetsAt: null, cacheWarmUntil: null }
 
     expect(usageSegments(bare, NOW).map(segment => segment.detail)).toEqual([undefined, undefined, undefined])
-    expect(usageSegments({ ...FULL, fiveHourPercent: null, weekPercent: null }, NOW).map(s => s.id)).toEqual(['context'])
-    expect(usageSegments({ ...FULL, contextPercent: null, fiveHourPercent: null, weekPercent: null }, NOW)).toEqual([])
+    expect(usageSegments({ ...FULL, fiveHourPercent: null, weekPercent: null, cacheWarmUntil: null }, NOW).map(s => s.id)).toEqual(['context'])
+    expect(usageSegments({ ...FULL, contextPercent: null, fiveHourPercent: null, weekPercent: null, cacheWarmUntil: null }, NOW)).toEqual([])
+  })
+})
+
+describe('cache segment', () => {
+  const cache = (cacheWarmUntil: string | null) =>
+    usageSegments({ ...FULL, cacheWarmUntil }, NOW).find(segment => segment.id === 'cache')
+
+  test('counts down green, turns amber under five minutes, red once cold', () => {
+    expect(cache('2026-10-12T12:47:00Z')).toMatchObject({ text: 'cache 47m', color: 'success' })
+    expect(cache('2026-10-12T12:04:00Z')).toMatchObject({ text: 'cache 4m', color: 'warning' })
+    expect(cache('2026-10-12T11:59:00Z')).toMatchObject({ text: 'cache cold', color: 'error' })
+    expect(cache(null)).toBeUndefined()
+  })
+
+  test('the main thread is cached for an hour', () => {
+    expect(CACHE_TTL_MS).toBe(3_600_000)
   })
 })
