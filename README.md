@@ -8,12 +8,14 @@ composes them.
 
 ### statusbar
 
-A one-row band above the prompt (terminal and desktop surfaces):
+A two-row band above the prompt (terminal and desktop surfaces), after one blank line:
 
 ```
-Sonnet 5.5 · effort xhigh · ⏸ plan mode · ~/git/workbench · git:master
-context 34% · 5h 13% ↻ 2h 14m · week 81% ↻ pon 14:00
+Opus 5.5 · effort high · ⏵⏵ auto mode · ~/git/workbench · git:main · API $3.46
+context 34% · 5h 13% ↻ 2h 14m · week 81% ↻ pon 14:00 · cache 47m
 ```
+
+First row:
 
 | Segment | Where it comes from |
 | --- | --- |
@@ -22,11 +24,23 @@ context 34% · 5h 13% ↻ 2h 14m · week 81% ↻ pon 14:00
 | mode | `permission_mode_changed` { to_mode }, which the CLI logs for an OpenTelemetry collector on every switch (read only, passed on unchanged); the permission mode on the classic events (`UserPromptSubmit`, `Stop`, `PostToolUse`, ...); the prompt footer's brief `... mode on` flash after Shift+Tab |
 | directory | `$.session.cwd()`, `classic.CwdChanged`; home shown as `~` |
 | branch | `git branch --show-current`, refreshed after each turn, after Bash calls and every 5 s |
-| API cost | `$.session.usage().cost.usd`, what the session would cost at API prices (as `/cost` totals it), refreshed with the usage; dropped first on a narrow terminal |
-| context / 5h / week / cache | `$.session.usage()`: `context.percent` and the `five_hour` / `seven_day` rate limits with their `resetsAt` (5h as a countdown redrawn every 30 s, the week as the local day and hour), after each response, at the end of a turn, after a compaction and every 5 s; green below 50 %, amber to 80 %, red above; a value not reported yet is left out. `cache` counts down from the last main-thread response: 1 h, the TTL the CLI uses for the main thread (amber under 5 min, red when cold) |
+| API cost | `$.session.usage().cost.usd`: what the session would have cost at API prices, as `/cost` totals it, even on a subscription; dimmed |
 
-On a narrow terminal the directory shortens first, then segments drop
-(effort, directory, branch, model, mode). The band gives way to a survey.
+Second row. Context, 5h and week come from `$.session.usage()`, refreshed after each response, at the end of a turn, after a compaction and every 5 s; cache is counted by the mod itself:
+
+| Segment | What it shows | Colors |
+| --- | --- | --- |
+| context | how full the context window is (`context.percent`) | green < 50 %, amber 50–80 %, red > 80 % |
+| 5h | the five-hour rate-limit window used, and `↻` the time left until it resets | same |
+| week | the weekly rate-limit window used, and `↻` the local day and hour it resets | same |
+| cache | how long the prompt cache stays warm: a countdown of 1 h (the TTL the CLI uses for the main thread) from the last main-thread response; cleared on a model switch, since the new model has no cache yet. Plugins are not told the TTL, so this is the CLI's rule, not a reading | green, amber under 5 min, red `cache cold` |
+
+The countdowns redraw every 30 s. A value the session has not reported yet
+(before the first response, or rate limits on an API key) is left out.
+
+On a narrow terminal the directory shortens first, then first-row segments
+drop: API cost, effort, directory, branch, model, mode. The band gives way to
+a survey.
 
 ## Layout
 
