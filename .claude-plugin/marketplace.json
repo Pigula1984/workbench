@@ -1,0 +1,6 @@
+{
+  "name": "workbench",
+  "description": "Mods that show live session data around the Claude Code prompt box.",
+  "owner": { "name": "Marcin Pigłowski" },
+  "plugins": [{ "name": "workbench", "source": "./" }]
+}
