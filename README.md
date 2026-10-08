@@ -102,16 +102,74 @@ from `hooks/register.tsx`, and declare its state under `workbench` in
 
 ## Run it
 
-```
-claude --plugin-dir C:\Users\Admin\git\workbench
-```
+### Install it for every session
 
-Or install it for every session from this folder (edits show after `/reload-plugins`):
+Clone the repository, add the clone as a marketplace and install the plugin
+from it. The marketplace's entry is a relative path (`"source": "./"`), so
+Claude Code reads the plugin from the clone itself, not from a copy: after a
+`git pull` or an edit, `/reload-plugins` in a running session picks it up.
 
-```
-claude plugin marketplace add C:\Users\Admin\git\workbench
+Windows (PowerShell):
+
+```powershell
+git clone https://github.com/Pigula1984/workbench.git $HOME\git\workbench
+claude plugin marketplace add $HOME\git\workbench
 claude plugin install workbench@workbench
 ```
+
+macOS and Linux:
+
+```sh
+git clone https://github.com/Pigula1984/workbench.git ~/git/workbench
+claude plugin marketplace add ~/git/workbench
+claude plugin install workbench@workbench
+```
+
+Any folder will do in place of `git/workbench`. `/plugin` turns it off and on
+again; to remove it:
+
+```
+claude plugin uninstall workbench@workbench
+claude plugin marketplace remove workbench
+```
+
+Without a clone, `claude plugin marketplace add Pigula1984/workbench` adds the
+GitHub repository itself; the plugin then runs a copy made at install, which
+`claude plugin update workbench@workbench` refreshes.
+
+### Try it for one session
+
+```sh
+claude --plugin-dir <path to the clone>
+```
+
+### Work on the mods
+
+Name the clone in `CLAUDE_CODE_PLUGIN_DIRS`, in the `env` block of
+`~/.claude/settings.json` (several folders are separated by `;` on Windows,
+`:` on macOS and Linux). Every session loads it as a `--plugin-dir`, and an
+interactive one watches the folder: a saved file reloads the mods at once.
+Use this or the install above, not both, or the plugin loads twice.
+
+Windows (`%USERPROFILE%\.claude\settings.json`; backslashes doubled in JSON):
+
+```json
+{ "env": { "CLAUDE_CODE_PLUGIN_DIRS": "C:\\Users\\<you>\\git\\workbench" } }
+```
+
+macOS:
+
+```json
+{ "env": { "CLAUDE_CODE_PLUGIN_DIRS": "/Users/<you>/git/workbench" } }
+```
+
+Linux:
+
+```json
+{ "env": { "CLAUDE_CODE_PLUGIN_DIRS": "/home/<you>/git/workbench" } }
+```
+
+`~` works in place of the home folder.
 
 ## Check it
 
