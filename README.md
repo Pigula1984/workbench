@@ -48,7 +48,7 @@ While a dynamic workflow runs, the band above the prompt (terminal and
 desktop surfaces) shows its steps under the statusbar's rows, one row per run:
 
 ```
-Zbieranie (3/3) -> Analiza (1/3) -> Podsumowanie
+Collect (3/3) -> Analyze (1/3) -> Summarize
 ```
 
 | Step | Color |

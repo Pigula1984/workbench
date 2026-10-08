@@ -90,7 +90,7 @@ async function noteEnd($: EngineInterface, taskId: string, status: WorkflowStatu
 
 /**
  * The steps of each workflow run in the band above the prompt, under the
- * statusbar: `Zbieranie (3/3) -> Analiza (1/2) -> Podsumowanie`, the
+ * statusbar: `Collect (3/3) -> Analyze (1/2) -> Summarize`, the
  * finished steps green, the current one blue, the ones to come grey, and the
  * step a failed or stopped run ended in red.
  */
