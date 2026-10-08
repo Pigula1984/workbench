@@ -13,7 +13,7 @@ const SCRIPT_PATH = 'C:\\runs\\scripts\\probe.js'
 const SCRIPT = `export const meta = {
   name: 'probe-progress',
   description: 'Three phases',
-  phases: [{ title: 'Zbieranie' }, { title: 'Analiza' }, { title: 'Podsumowanie' }],
+  phases: [{ title: 'Collect' }, { title: 'Analyze' }, { title: 'Summarize' }],
 }
 `
 
@@ -104,12 +104,12 @@ test('leaves the band to the statusbar while no workflow runs', async ($, on) =>
 })
 
 test('shows the steps of a running workflow, each in its color', async ($, on) => {
-  await startSession($, on, { a1: 'Zbieranie', a2: 'Zbieranie', a3: 'Analiza', a4: 'Analiza' })
+  await startSession($, on, { a1: 'Collect', a2: 'Collect', a3: 'Analyze', a4: 'Analyze' })
 
   const ui = await mountBand($)
 
   await launch($)
-  expect(await shown(ui)).toContain('Zbieranie -> Analiza -> Podsumowanie')
+  expect(await shown(ui)).toContain('Collect -> Analyze -> Summarize')
 
   await spawn($, 'a1')
   await spawn($, 'a2')
@@ -119,10 +119,10 @@ test('shows the steps of a running workflow, each in its color', async ($, on) =
   await spawn($, 'a4')
   await finish($, 'a3')
 
-  expect(await shown(ui)).toContain('Zbieranie (2/2) -> Analiza (1/2) -> Podsumowanie')
-  expect(await colorOf(ui, 'Zbieranie (2/2)')).toBe('success')
-  expect(await colorOf(ui, 'Analiza (1/2)')).toBe('suggestion')
-  expect(await colorOf(ui, 'Podsumowanie')).toBe('inactive')
+  expect(await shown(ui)).toContain('Collect (2/2) -> Analyze (1/2) -> Summarize')
+  expect(await colorOf(ui, 'Collect (2/2)')).toBe('success')
+  expect(await colorOf(ui, 'Analyze (1/2)')).toBe('suggestion')
+  expect(await colorOf(ui, 'Summarize')).toBe('inactive')
 })
 
 test('ignores agents that no workflow started', async ($, on) => {
@@ -146,7 +146,7 @@ test('ignores agents that no workflow started', async ($, on) => {
 })
 
 test('turns the step a failed run stopped in red', async ($, on) => {
-  const clock = await startSession($, on, { a1: 'Zbieranie', a2: 'Analiza' })
+  const clock = await startSession($, on, { a1: 'Collect', a2: 'Analyze' })
 
   const ui = await mountBand($)
 
@@ -158,13 +158,13 @@ test('turns the step a failed run stopped in red', async ($, on) => {
   await notify($, 'failed')
   await clock.settle()
 
-  expect(await shown(ui)).toContain('Zbieranie (1/1) -> Analiza (1/1) -> Podsumowanie')
-  expect(await colorOf(ui, 'Zbieranie (1/1)')).toBe('success')
-  expect(await colorOf(ui, 'Analiza (1/1)')).toBe('error')
+  expect(await shown(ui)).toContain('Collect (1/1) -> Analyze (1/1) -> Summarize')
+  expect(await colorOf(ui, 'Collect (1/1)')).toBe('success')
+  expect(await colorOf(ui, 'Analyze (1/1)')).toBe('error')
 })
 
 test('keeps an ended run until the person sends the next prompt', async ($, on) => {
-  const clock = await startSession($, on, { a1: 'Zbieranie' })
+  const clock = await startSession($, on, { a1: 'Collect' })
 
   const ui = await mountBand($)
 
@@ -176,15 +176,15 @@ test('keeps an ended run until the person sends the next prompt', async ($, on) 
 
   // The notification's own turn does not clear it.
   await $.prompt.submit({ text: '<task-notification>', wait: false, origin: { kind: 'task-notification' } })
-  expect(await shown(ui)).toContain('Zbieranie (1/1) -> Analiza -> Podsumowanie')
-  expect(await colorOf(ui, 'Zbieranie (1/1)')).toBe('success')
+  expect(await shown(ui)).toContain('Collect (1/1) -> Analyze -> Summarize')
+  expect(await colorOf(ui, 'Collect (1/1)')).toBe('success')
 
   await $.prompt.submit({ text: 'next', wait: false, origin: { kind: 'composer' } })
   expect(await shown(ui)).toBe('')
 })
 
 test('a running workflow stays through the next prompt', async ($, on) => {
-  await startSession($, on, { a1: 'Zbieranie' })
+  await startSession($, on, { a1: 'Collect' })
 
   const ui = await mountBand($)
 
@@ -192,11 +192,11 @@ test('a running workflow stays through the next prompt', async ($, on) => {
   await spawn($, 'a1')
   await $.prompt.submit({ text: 'next', wait: false, origin: { kind: 'composer' } })
 
-  expect(await shown(ui)).toContain('Zbieranie (0/1)')
+  expect(await shown(ui)).toContain('Collect (0/1)')
 })
 
 test('draws the steps under the statusbar rows', async ($, on) => {
-  await startSession($, on, { a1: 'Zbieranie' })
+  await startSession($, on, { a1: 'Collect' })
 
   const ui = await mountBand($)
 
@@ -208,12 +208,12 @@ test('draws the steps under the statusbar rows', async ($, on) => {
   const text = await shown(ui)
 
   expect(text).toContain('⏸ plan mode')
-  expect(text).toContain('Zbieranie (0/1) -> Analiza -> Podsumowanie')
-  expect(text.indexOf('plan mode')).toBeLessThan(text.indexOf('Zbieranie'))
+  expect(text).toContain('Collect (0/1) -> Analyze -> Summarize')
+  expect(text.indexOf('plan mode')).toBeLessThan(text.indexOf('Collect'))
 })
 
 test('yields the band to a survey', async ($, on) => {
-  await startSession($, on, { a1: 'Zbieranie' })
+  await startSession($, on, { a1: 'Collect' })
 
   await launch($)
   await spawn($, 'a1')

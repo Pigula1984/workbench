@@ -19,12 +19,12 @@ const SCRIPT = `export const meta = {
   name: 'review-changes',
   description: 'Review changed files across dimensions, verify each finding',
   phases: [
-    { title: 'Zbieranie', detail: 'one [agent] per file' },
-    { title: "Analiza", model: 'haiku' },
-    { title: \`Podsumowanie\` },
+    { title: 'Collect', detail: 'one [agent] per file' },
+    { title: "Analyze", model: 'haiku' },
+    { title: \`Summarize\` },
   ],
 }
-phase('Zbieranie')
+phase('Collect')
 const other = { phases: [{ title: 'not meta' }] }
 `
 
@@ -33,7 +33,7 @@ const run = (overrides: Partial<WorkflowRun> = {}): WorkflowRun => ({
   taskId: 'task-1',
   name: 'review-changes',
   transcriptDir: 'C:\\runs\\wf_1',
-  phases: ['Zbieranie', 'Analiza', 'Podsumowanie'],
+  phases: ['Collect', 'Analyze', 'Summarize'],
   agents: [],
   status: 'running',
   ...overrides,
@@ -43,7 +43,7 @@ const agent = (id: string, phase: string | null, isFinished: boolean) => ({ id, 
 
 describe('declaredPhases', () => {
   test('reads the titles of meta.phases in order, whatever the quotes', () => {
-    expect(declaredPhases(SCRIPT)).toEqual(['Zbieranie', 'Analiza', 'Podsumowanie'])
+    expect(declaredPhases(SCRIPT)).toEqual(['Collect', 'Analyze', 'Summarize'])
   })
 
   test('is empty for a script that declares no phases', () => {
@@ -61,25 +61,25 @@ describe('steps', () => {
     const shown = steps(
       run({
         agents: [
-          agent('a1', 'Zbieranie', true),
-          agent('a2', 'Zbieranie', true),
-          agent('a3', 'Zbieranie', true),
-          agent('a4', 'Analiza', true),
-          agent('a5', 'Analiza', false),
-          agent('a6', 'Analiza', false),
+          agent('a1', 'Collect', true),
+          agent('a2', 'Collect', true),
+          agent('a3', 'Collect', true),
+          agent('a4', 'Analyze', true),
+          agent('a5', 'Analyze', false),
+          agent('a6', 'Analyze', false),
         ],
       }),
     )
 
     expect(shown).toEqual([
-      { title: 'Zbieranie', finished: 3, total: 3, state: 'done' },
-      { title: 'Analiza', finished: 1, total: 3, state: 'active' },
-      { title: 'Podsumowanie', finished: 0, total: 0, state: 'pending' },
+      { title: 'Collect', finished: 3, total: 3, state: 'done' },
+      { title: 'Analyze', finished: 1, total: 3, state: 'active' },
+      { title: 'Summarize', finished: 0, total: 0, state: 'pending' },
     ])
   })
 
   test('a step stays current between phases, until a later one starts', () => {
-    const shown = steps(run({ agents: [agent('a1', 'Zbieranie', true)] }))
+    const shown = steps(run({ agents: [agent('a1', 'Collect', true)] }))
 
     expect(shown.map(step => step.state)).toEqual(['active', 'pending', 'pending'])
   })
@@ -87,33 +87,33 @@ describe('steps', () => {
   test('a completed run shows every started step done and whole', () => {
     // A retried agent is not raised again, so the events can leave a step short.
     const shown = steps(
-      run({ status: 'completed', agents: [agent('a1', 'Zbieranie', true), agent('a2', 'Analiza', false)] }),
+      run({ status: 'completed', agents: [agent('a1', 'Collect', true), agent('a2', 'Analyze', false)] }),
     )
 
     expect(shown).toEqual([
-      { title: 'Zbieranie', finished: 1, total: 1, state: 'done' },
-      { title: 'Analiza', finished: 1, total: 1, state: 'done' },
-      { title: 'Podsumowanie', finished: 0, total: 0, state: 'pending' },
+      { title: 'Collect', finished: 1, total: 1, state: 'done' },
+      { title: 'Analyze', finished: 1, total: 1, state: 'done' },
+      { title: 'Summarize', finished: 0, total: 0, state: 'pending' },
     ])
   })
 
   test('a failed run is red in the step it stopped in', () => {
     const working = steps(
-      run({ status: 'failed', agents: [agent('a1', 'Zbieranie', true), agent('a2', 'Analiza', false)] }),
+      run({ status: 'failed', agents: [agent('a1', 'Collect', true), agent('a2', 'Analyze', false)] }),
     )
 
     expect(working.map(step => step.state)).toEqual(['done', 'failed', 'pending'])
 
     // The script threw between agents: the last step that started is where it stopped.
     const between = steps(
-      run({ status: 'failed', agents: [agent('a1', 'Zbieranie', true), agent('a2', 'Analiza', true)] }),
+      run({ status: 'failed', agents: [agent('a1', 'Collect', true), agent('a2', 'Analyze', true)] }),
     )
 
     expect(between.map(step => step.state)).toEqual(['done', 'failed', 'pending'])
   })
 
   test('a stopped run is red where it stopped, too', () => {
-    const shown = steps(run({ status: 'killed', agents: [agent('a1', 'Zbieranie', false)] }))
+    const shown = steps(run({ status: 'killed', agents: [agent('a1', 'Collect', false)] }))
 
     expect(shown.map(step => step.state)).toEqual(['failed', 'pending', 'pending'])
   })
@@ -139,26 +139,26 @@ describe('chain', () => {
       run({
         status: 'failed',
         agents: [
-          agent('a1', 'Zbieranie', true),
-          agent('a2', 'Zbieranie', true),
-          agent('a3', 'Zbieranie', true),
-          agent('a4', 'Analiza', true),
-          agent('a5', 'Analiza', false),
+          agent('a1', 'Collect', true),
+          agent('a2', 'Collect', true),
+          agent('a3', 'Collect', true),
+          agent('a4', 'Analyze', true),
+          agent('a5', 'Analyze', false),
         ],
       }),
     )
 
     expect(segments).toEqual([
-      { text: 'Zbieranie (3/3)', color: 'success', isBold: false },
-      { text: 'Analiza (1/2)', color: 'error', isBold: true },
-      { text: 'Podsumowanie', color: 'inactive', isBold: false },
+      { text: 'Collect (3/3)', color: 'success', isBold: false },
+      { text: 'Analyze (1/2)', color: 'error', isBold: true },
+      { text: 'Summarize', color: 'inactive', isBold: false },
     ])
   })
 
   test('the current step is blue and bold', () => {
-    const [first] = chain(run({ agents: [agent('a1', 'Zbieranie', false)] }))
+    const [first] = chain(run({ agents: [agent('a1', 'Collect', false)] }))
 
-    expect(first).toEqual({ text: 'Zbieranie (0/1)', color: 'suggestion', isBold: true })
+    expect(first).toEqual({ text: 'Collect (0/1)', color: 'suggestion', isBold: true })
   })
 })
 
@@ -169,7 +169,7 @@ describe('the state', () => {
     taskId: 'task-1',
     name: 'review-changes',
     transcriptDir: 'C:\\runs\\wf_1',
-    phases: ['Zbieranie'],
+    phases: ['Collect'],
   }
 
   test('follows a run from launch to end', () => {
@@ -180,10 +180,10 @@ describe('the state', () => {
     expect(state.runs[0]?.agents).toEqual([agent('a1', null, false)])
     expect(unphased(state)).toEqual([{ agentId: 'a1', transcriptDir: 'C:\\runs\\wf_1' }])
 
-    state = agentPhased(state, 'a1', 'Zbieranie')
+    state = agentPhased(state, 'a1', 'Collect')
     state = agentFinished(state, 'a1')
 
-    expect(state.runs[0]?.agents).toEqual([agent('a1', 'Zbieranie', true)])
+    expect(state.runs[0]?.agents).toEqual([agent('a1', 'Collect', true)])
     expect(unphased(state)).toEqual([])
 
     state = ended(state, 'task-1', 'failed')
