@@ -31,8 +31,41 @@ export type StatusbarState = {
   costUsd: number | null
 }
 
+/** Where a workflow run stands: running, or how it ended as its task notification says. */
+export type WorkflowStatus = 'running' | 'completed' | 'failed' | 'killed'
+
+/** One agent a workflow script's `agent()` started. */
+export type WorkflowAgent = {
+  /** The id `agent.spawn` answered, which the agent's `turn.complete` carries. */
+  id: string
+  /** The phase the run filed it under; `''` for none, `null` until its meta file is read. */
+  phase: string | null
+  /** True once its turn ended, answered or not. */
+  isFinished: boolean
+}
+
+/** One run of the Workflow tool, keyed by its `runId` (a resume keeps it). */
+export type WorkflowRun = {
+  runId: string
+  /** The background task's id, which its notification names; null until the launch is seen. */
+  taskId: string | null
+  /** `meta.name` of the script. */
+  name: string | null
+  /** Where the run keeps its agents' transcripts and meta files. */
+  transcriptDir: string | null
+  /** The phase titles the script's `meta.phases` declares, in order. */
+  phases: string[]
+  agents: WorkflowAgent[]
+  status: WorkflowStatus
+}
+
+/** What the workflow mod knows: the runs of this session it still shows. */
+export type WorkflowState = {
+  runs: WorkflowRun[]
+}
+
 declare module 'claude-code' {
   interface PluginState {
-    workbench: { statusbar: StatusbarState }
+    workbench: { statusbar: StatusbarState; workflow: WorkflowState }
   }
 }

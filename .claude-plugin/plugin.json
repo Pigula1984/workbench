@@ -1,7 +1,7 @@
 {
   "name": "workbench",
   "version": "0.1.0",
-  "description": "A set of mods that put live session data around the prompt box. First mod: statusbar (model, effort, mode, directory, branch).",
+  "description": "A set of mods that put live session data around the prompt box: statusbar (model, effort, mode, directory, branch, usage) and workflow (a dynamic workflow's steps under the prompt).",
   "author": { "name": "Marcin Pigłowski" },
   "types": "./types/index.d.ts"
 }

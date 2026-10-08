@@ -42,6 +42,44 @@ On a narrow terminal the directory shortens first, then first-row segments
 drop: API cost, effort, directory, branch, model, mode. The band gives way to
 a survey.
 
+### workflow
+
+While a dynamic workflow runs, the band above the prompt (terminal and
+desktop surfaces) shows its steps under the statusbar's rows, one row per run:
+
+```
+Zbieranie (3/3) -> Analiza (1/3) -> Podsumowanie
+```
+
+| Step | Color |
+| --- | --- |
+| finished | green |
+| current: agents still working, or the last step started while the script is between phases | blue, bold |
+| not started yet | grey, no count |
+| where a failed or stopped (`failed`, `killed`) run ended | red, bold |
+
+`(finished/started)` counts the step's agents whose turn has ended against
+those started so far. A run that completes shows every started step done.
+A run that ended stays on screen until the next prompt you send. The band
+gives way to a survey.
+
+The two mods share the band: `hooks/register.tsx` registers the workflow mod
+first, so its hook is the outer one, takes the statusbar's tree from `next(e)`
+and adds its rows under it.
+
+| What | Where it comes from |
+| --- | --- |
+| the steps, in order | `meta.phases` of the run's script, read from the `scriptPath` the Workflow tool answers; a phase no `meta` entry declares follows them, an agent under no phase counts under the workflow's name |
+| each agent | `agent.spawn` with `workflow.runId`; its phase from `agent-<id>.meta.json` (`workflowPhase`) in the run's `transcriptDir`, read when it starts and when it ends |
+| an agent finished | its `turn.complete` |
+| how the run ended | the task's notification row (`UserMessage`, `task.status`) |
+
+A resumed run keeps its finished agents; agents replayed from the run's journal
+or retried after a stall raise no event, so the counts show only live ones
+until the run completes. A run launched before the plugin loaded is not shown.
+The engine's own progress row for the run (the squares, `2/3 · 13s · tokens`)
+stays: it is drawn outside every site a plugin can hook.
+
 ## Layout
 
 ```
@@ -49,6 +87,7 @@ a survey.
 hooks/hooks.json             names the one hooks module
 hooks/register.tsx           composes the mods
 mods/statusbar/              the statusbar mod (statusbar.tsx has every `$` call)
+mods/workflow/               the workflow mod (workflow.tsx has every `$` call)
 types/index.d.ts             the plugin's `$.state` contract
 tests/                       claude plugin test .
 ```
