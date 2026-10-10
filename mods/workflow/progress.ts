@@ -8,6 +8,9 @@ import type { WorkflowRun, WorkflowState, WorkflowStatus } from '../../types'
 
 export const ARROW = ' -> '
 
+/** What goes between the workflow's name and its steps. */
+export const LABEL_SEPARATOR = ': '
+
 /** How one step of the chain is drawn: finished, running now, not started, or where the run stopped. */
 export type StepState = 'done' | 'active' | 'pending' | 'failed'
 
@@ -232,6 +235,17 @@ export const steps = (run: WorkflowRun): Step[] => {
           ? 'active'
           : 'done',
   }))
+}
+
+/**
+ * The workflow's name as the row's label: `meta.name` with its dashes and
+ * underscores as spaces and its first letter capitalised (`report-analyzes`
+ * reads `Report analyzes`); none until the launch names the run.
+ */
+export const label = (run: WorkflowRun): string | null => {
+  const words = (run.name ?? '').replace(/[-_]+/g, ' ').trim()
+
+  return words === '' ? null : words.charAt(0).toUpperCase() + words.slice(1)
 }
 
 /** The chain the prompt hint draws for one run: one segment per step, its count beside a started one. */

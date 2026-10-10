@@ -12,6 +12,8 @@ import {
   cleared,
   declaredPhases,
   ended,
+  label,
+  LABEL_SEPARATOR,
   launched,
   statusFromNotification,
   unphased,
@@ -90,7 +92,7 @@ async function noteEnd($: EngineInterface, taskId: string, status: WorkflowStatu
 
 /**
  * The steps of each workflow run in the band above the prompt, under the
- * statusbar: `Collect (3/3) -> Analyze (1/2) -> Summarize`, the
+ * statusbar: `Report analyzes: Collect (3/3) -> Analyze (1/2) -> Summarize`, the
  * finished steps green, the current one blue, the ones to come grey, and the
  * step a failed or stopped run ended in red.
  */
@@ -186,7 +188,9 @@ export const registerWorkflow = (on: On): void => {
       return beneath
     }
 
-    const rows = (await read($, progress)).runs.map(chain).filter(row => row.length > 0)
+    const rows = (await read($, progress)).runs
+      .map(run => ({ name: label(run), segments: chain(run) }))
+      .filter(row => row.segments.length > 0)
 
     if (rows.length === 0) {
       return beneath
@@ -202,7 +206,15 @@ export const registerWorkflow = (on: On): void => {
         {isTree && beneath}
         {rows.map(row => (
           <Box>
-            {row.map((segment, index) => (
+            {row.name !== null && (
+              <Box>
+                <Text bold wrap="truncate">
+                  {row.name}
+                </Text>
+                <Text dimColor>{LABEL_SEPARATOR}</Text>
+              </Box>
+            )}
+            {row.segments.map((segment, index) => (
               <Box>
                 {index > 0 && <Text dimColor>{ARROW}</Text>}
                 <Text color={segment.color} bold={segment.isBold} wrap="truncate">

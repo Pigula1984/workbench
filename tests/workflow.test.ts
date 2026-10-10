@@ -109,7 +109,7 @@ test('shows the steps of a running workflow, each in its color', async ($, on) =
   const ui = await mountBand($)
 
   await launch($)
-  expect(await shown(ui)).toContain('Collect -> Analyze -> Summarize')
+  expect(await shown(ui)).toContain('Probe progress: Collect -> Analyze -> Summarize')
 
   await spawn($, 'a1')
   await spawn($, 'a2')
@@ -123,6 +123,7 @@ test('shows the steps of a running workflow, each in its color', async ($, on) =
   expect(await colorOf(ui, 'Collect (2/2)')).toBe('success')
   expect(await colorOf(ui, 'Analyze (1/2)')).toBe('suggestion')
   expect(await colorOf(ui, 'Summarize')).toBe('inactive')
+  expect((await ui.find({ type: 'Text', text: 'Probe progress' }))?.props.bold).toBe(true)
 })
 
 test('ignores agents that no workflow started', async ($, on) => {

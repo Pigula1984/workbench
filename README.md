@@ -45,11 +45,16 @@ a survey.
 ### workflow
 
 While a dynamic workflow runs, the band above the prompt (terminal and
-desktop surfaces) shows its steps under the statusbar's rows, one row per run:
+desktop surfaces) shows its steps under the statusbar's rows, one row per run,
+after the workflow's name:
 
 ```
-Collect (3/3) -> Analyze (1/3) -> Summarize
+Report analyzes: Collect (3/3) -> Analyze (1/3) -> Summarize
 ```
+
+The name is the script's `meta.name` (as the Workflow tool answers it, in bold)
+with dashes and underscores read as spaces and its first letter capitalised:
+`report-analyzes` reads `Report analyzes`.
 
 | Step | Color |
 | --- | --- |

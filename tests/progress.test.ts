@@ -8,6 +8,7 @@ import {
   cleared,
   declaredPhases,
   ended,
+  label,
   launched,
   statusFromNotification,
   steps,
@@ -159,6 +160,19 @@ describe('chain', () => {
     const [first] = chain(run({ agents: [agent('a1', 'Collect', false)] }))
 
     expect(first).toEqual({ text: 'Collect (0/1)', color: 'suggestion', isBold: true })
+  })
+})
+
+describe('label', () => {
+  test("reads the workflow's name as words, the first capitalised", () => {
+    expect(label(run({ name: 'report-analyzes' }))).toBe('Report analyzes')
+    expect(label(run({ name: 'nightly_deps--audit' }))).toBe('Nightly deps audit')
+    expect(label(run({ name: 'Report analyzes' }))).toBe('Report analyzes')
+  })
+
+  test('none before the launch names the run', () => {
+    expect(label(run({ name: null }))).toBeNull()
+    expect(label(run({ name: ' - ' }))).toBeNull()
   })
 })
 
